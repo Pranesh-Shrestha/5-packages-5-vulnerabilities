@@ -3,6 +3,12 @@ name = "five-vulns-cargo"
 version = "1.0.0"
 edition = "2021"
 
+# Stub binary target so the manifest is valid (cargo needs a target to lock/fetch).
+# Nothing is compiled in CI — jobs only run generate-lockfile + fetch.
+[[bin]]
+name = "five-vulns-cargo"
+path = "src/main.rs"
+
 # 5 crates, each with exactly one CVE
 [dependencies]
 slab = "=0.4.10"   # CVE-2025-55159
