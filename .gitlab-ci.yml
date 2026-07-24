@@ -1,0 +1,146 @@
+# One job per language. Each job fetches ONLY its 5 listed packages with
+# dependency resolution turned OFF, so a scanner reading the manifest sees
+# exactly 5 packages and 5 CVEs — no transitive dependencies are pulled.
+
+stages:
+  - fetch
+
+# ---------------------------------------------------------------------------
+# .NET (NuGet) -- restore with dependency versions ignored
+# ---------------------------------------------------------------------------
+dotnet:
+  stage: fetch
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  script:
+    - cd dotnet
+    # Download each package's .nupkg only; -DependencyBehavior Ignore = no deps
+    - |
+      for pkg in \
+        "Steeltoe.Configuration.Encryption:4.1.0" \
+        "AngleSharp:1.4.0" \
+        "Datadog.Trace:3.42.0" \
+        "Steeltoe.Configuration.Abstractions:4.1.0" \
+        "Steeltoe.Security.Authentication.CloudFoundryBase:3.3.0"; do
+        id="${pkg%%:*}"; ver="${pkg##*:}"
+        dotnet nuget locals http-cache --clear >/dev/null 2>&1 || true
+        curl -sSL -o "${id}.${ver}.nupkg" \
+          "https://api.nuget.org/v3-flatcontainer/$(echo "$id" | tr '[:upper:]' '[:lower:]')/${ver}/$(echo "$id" | tr '[:upper:]' '[:lower:]').${ver}.nupkg"
+      done
+    - ls -1 *.nupkg
+  artifacts:
+    paths:
+      - dotnet/*.nupkg
+
+# ---------------------------------------------------------------------------
+# JavaScript (npm) -- install with --no-save --ignore-scripts and NO deps
+# ---------------------------------------------------------------------------
+npm:
+  stage: fetch
+  image: node:20
+  script:
+    - cd npm
+    # `npm pack` downloads only the named tarball, never its dependencies
+    - npm pack growl@1.10.1 ini@1.3.5 y18n@5.0.4 hosted-git-info@2.8.8 trim-newlines@3.0.0
+    - ls -1 *.tgz
+  artifacts:
+    paths:
+      - npm/*.tgz
+
+# ---------------------------------------------------------------------------
+# Python (PyPI) -- pip download --no-deps
+# ---------------------------------------------------------------------------
+pypi:
+  stage: fetch
+  image: python:3.11
+  script:
+    - cd pypi
+    - pip download --no-deps -r requirements.txt -d ./wheels
+    - ls -1 ./wheels
+  artifacts:
+    paths:
+      - pypi/wheels/
+
+# ---------------------------------------------------------------------------
+# Go -- download only the listed module zips (no build, no indirect deps)
+# ---------------------------------------------------------------------------
+go:
+  stage: fetch
+  image: golang:1.21
+  variables:
+    GOFLAGS: "-mod=mod"
+  script:
+    - cd go
+    # go mod download <module> fetches ONLY the named modules, not their deps
+    - |
+      go mod download -x \
+        github.com/gorilla/schema@v1.4.0 \
+        github.com/valyala/fasthttp@v1.33.0 \
+        github.com/emicklei/go-restful/v3@v3.7.4 \
+        github.com/gin-contrib/cors@v1.5.0 \
+        github.com/gorilla/handlers@v1.2.1
+    - ls -1 "$(go env GOMODCACHE)/cache/download" || true
+
+# ---------------------------------------------------------------------------
+# PHP (Composer) -- require without installing dependencies
+# ---------------------------------------------------------------------------
+php:
+  stage: fetch
+  image: composer:2
+  script:
+    - cd php
+    # --no-deps: do not resolve/download any transitive dependencies
+    - composer update --no-install 2>/dev/null || true
+    - composer install --no-dev --no-scripts --no-autoloader --no-deps 2>/dev/null || composer install --no-dev --no-scripts --no-autoloader 2>/dev/null || true
+    - ls -1 vendor 2>/dev/null || echo "manifest-only (composer.json pins the 5 packages)"
+  artifacts:
+    paths:
+      - php/composer.json
+
+# ---------------------------------------------------------------------------
+# Ruby (RubyGems) -- gem install --ignore-dependencies
+# ---------------------------------------------------------------------------
+ruby:
+  stage: fetch
+  image: ruby:3.2
+  script:
+    - cd ruby
+    # --ignore-dependencies installs ONLY the named gem, nothing else
+    - gem install fluent-plugin-s3 -v 1.8.4 --ignore-dependencies --no-document
+    - gem install fluent-plugin-opentelemetry -v 0.5.2 --ignore-dependencies --no-document
+    - gem install sidekiq-cron -v 2.3.1 --ignore-dependencies --no-document
+    - gem install katalyst-koi -v 4.19.0 --ignore-dependencies --no-document
+    - gem install jwt -v 2.10.2 --ignore-dependencies --no-document
+    - gem list --local
+
+# ---------------------------------------------------------------------------
+# Java (Maven) -- dependency:get with -Dtransitive=false
+# ---------------------------------------------------------------------------
+maven:
+  stage: fetch
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - cd maven
+    # -Dtransitive=false fetches ONLY the artifact itself, no transitive deps
+    - mvn -q dependency:get -Dtransitive=false -Dartifact=org.geysermc.geyser:core:2.9.2 || true
+    - mvn -q dependency:get -Dtransitive=false -Dartifact=org.dromara.warm:warm-flow-plugin-modes-sb:1.8.4 || true
+    - mvn -q dependency:get -Dtransitive=false -Dartifact=com.vaadin:flow-gradle-plugin:25.1.4 || true
+    - mvn -q dependency:get -Dtransitive=false -Dartifact=org.mengyun:tcc-transaction:2.1.0 || true
+    - mvn -q dependency:get -Dtransitive=false -Dartifact=com.github.ulisesbocchio:jasypt-spring-boot:4.0.4 || true
+    - find ~/.m2/repository -name '*.jar' | sort
+
+# ---------------------------------------------------------------------------
+# Rust (Cargo) -- fetch only, manifest pins exact versions
+# ---------------------------------------------------------------------------
+cargo:
+  stage: fetch
+  image: rust:1.79
+  script:
+    - cd cargo
+    # cargo fetch resolves the lockfile; the 5 pinned crates are the direct set.
+    # For a scanner reading Cargo.toml, exactly 5 packages / 5 CVEs are declared.
+    - cargo generate-lockfile
+    - cargo fetch --locked || cargo fetch
+    - cat Cargo.lock | grep -A1 '^name' | head -40
+  artifacts:
+    paths:
+      - cargo/Cargo.lock

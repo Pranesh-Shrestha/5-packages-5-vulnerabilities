@@ -1,0 +1,12 @@
+[package]
+name = "five-vulns-cargo"
+version = "1.0.0"
+edition = "2021"
+
+# 5 crates, each with exactly one CVE
+[dependencies]
+slab = "=0.4.10"   # CVE-2025-55159
+ic-cdk = "=0.15.0" # CVE-2024-7884
+ouch = "=0.3.1"    # CVE-2024-13941
+tonic = "=0.12.2"  # CVE-2024-47609
+users = "=0.11.0"  # CVE-2025-5791

@@ -1,0 +1,13 @@
+{
+  "name": "five-vulns-npm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "5 npm packages, each with exactly one CVE",
+  "dependencies": {
+    "growl": "1.10.1",
+    "ini": "1.3.5",
+    "y18n": "5.0.4",
+    "hosted-git-info": "2.8.8",
+    "trim-newlines": "3.0.0"
+  }
+}

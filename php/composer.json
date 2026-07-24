@@ -1,0 +1,11 @@
+{
+    "name": "test/five-vulns-php",
+    "description": "5 Composer packages, each with exactly one CVE",
+    "require": {
+        "mediawiki/maps": "12.1.2",
+        "aimeos/pagible": "0.10.3",
+        "php-standard-library/h2": "6.1.1",
+        "symfony/ux-icons": "2.36.0",
+        "symfony/ux-toolkit": "2.36.0"
+    }
+}

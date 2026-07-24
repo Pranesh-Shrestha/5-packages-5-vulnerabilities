@@ -1,0 +1,6 @@
+# 5 PyPI packages, each with exactly one CVE
+Flask-Caching==1.9.0          # CVE-2021-33026
+django-two-factor-auth==1.11.0 # CVE-2020-15105
+cookiecutter==2.1.0           # CVE-2022-24065
+validators==0.12.5            # CVE-2019-19588
+python-jwt==3.3.3             # CVE-2022-39227

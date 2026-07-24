@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- Not built; used only to pin the 5 vulnerable packages -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Steeltoe.Configuration.Encryption" Version="4.1.0" />                        <!-- CVE-2026-50268 -->
+    <PackageReference Include="AngleSharp" Version="1.4.0" />                                                <!-- CVE-2026-54570 -->
+    <PackageReference Include="Datadog.Trace" Version="3.42.0" />                                            <!-- CVE-2026-50273 -->
+    <PackageReference Include="Steeltoe.Configuration.Abstractions" Version="4.1.0" />                       <!-- CVE-2026-50267 -->
+    <PackageReference Include="Steeltoe.Security.Authentication.CloudFoundryBase" Version="3.3.0" />         <!-- CVE-2026-50202 -->
+  </ItemGroup>
+
+</Project>
