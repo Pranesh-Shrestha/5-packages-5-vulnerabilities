@@ -202,7 +202,9 @@ build-java:
     - *baf_cleanup
 
 # ---------------------------------------------------------------------------
-# PHP (Composer) -- install without resolving transitive dependencies
+# PHP (Composer) -- download each package's dist tarball directly from the
+# Packagist API. This pulls ONLY the 5 named packages (no dependency
+# resolution) and avoids running `composer install` entirely.
 # ---------------------------------------------------------------------------
 build-php:
   stage: build-2
@@ -210,16 +212,33 @@ build-php:
   rules:
     - if: '$SKIP_PHP != "true"'
   script:
-    - apt-get update && apt-get install -y curl git unzip
-    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - apt-get update && apt-get install -y curl jq
     - *baf_setup
     - cd php
-    - composer validate --strict || true
-    - composer install --no-dev --no-scripts --no-autoloader --no-deps 2>/dev/null || composer install --no-dev --no-scripts --no-autoloader 2>/dev/null || true
-    - ls -1 vendor 2>/dev/null || echo "manifest-only (composer.json pins the 5 packages)"
+    - |
+      for pkg in \
+        "mediawiki/maps:12.1.2" \
+        "aimeos/pagible:0.10.3" \
+        "php-standard-library/h2:6.1.1" \
+        "symfony/ux-icons:2.36.0" \
+        "symfony/ux-toolkit:2.36.0"; do
+        name="${pkg%:*}"; ver="${pkg##*:}"
+        # Resolve the exact version's dist URL from the Packagist metadata (no deps resolved)
+        url="$(curl -sSL "https://repo.packagist.org/p2/${name}.json" \
+          | jq -r --arg v "$ver" '.packages[][] | select(.version==$v or .version==("v"+$v)) | .dist.url' | head -1)"
+        out="$(echo "$name" | tr '/' '-')-${ver}.zip"
+        if [ -n "$url" ] && [ "$url" != "null" ]; then
+          echo "Downloading $name $ver"
+          curl -sSL -o "$out" "$url"
+        else
+          echo "WARN: could not resolve dist URL for $name $ver"
+        fi
+      done
+    - ls -1 *.zip 2>/dev/null || echo "manifest-only (composer.json pins the 5 packages)"
     - *baf_cleanup
   artifacts:
     paths:
+      - php/*.zip
       - php/composer.json
 
 # ---------------------------------------------------------------------------
@@ -243,7 +262,10 @@ build-ruby:
     - *baf_cleanup
 
 # ---------------------------------------------------------------------------
-# Rust (Cargo) -- fetch only; Cargo.toml pins the 5 crates / 5 CVEs
+# Rust (Cargo) -- download each crate's .crate tarball directly from
+# static.crates.io. This fetches ONLY the 5 pinned crates (no transitive
+# dependency resolution), so it never trips on a transitive dep that needs a
+# newer Cargo edition (e.g. getrandom requiring edition2024).
 # ---------------------------------------------------------------------------
 build-cargo:
   stage: build-2
@@ -254,10 +276,20 @@ build-cargo:
     - apt-get update && apt-get install -y curl
     - *baf_setup
     - cd cargo
-    - cargo generate-lockfile
-    - cargo fetch --locked || cargo fetch
-    - grep -A1 '^name' Cargo.lock | head -40
+    - |
+      for crate in \
+        "libsqlite3-sys:0.25.0" \
+        "lz4-sys:1.9.3" \
+        "ouch:0.3.1" \
+        "tonic:0.12.2" \
+        "users:0.11.0"; do
+        name="${crate%:*}"; ver="${crate##*:}"
+        echo "Downloading $name $ver"
+        curl -sSL -o "${name}-${ver}.crate" \
+          "https://static.crates.io/crates/${name}/${name}-${ver}.crate"
+      done
+    - ls -1 *.crate
     - *baf_cleanup
   artifacts:
     paths:
-      - cargo/Cargo.lock
+      - cargo/*.crate
