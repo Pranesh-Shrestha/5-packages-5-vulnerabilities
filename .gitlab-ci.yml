@@ -160,8 +160,11 @@ build-go:
     - *baf_cleanup
 
 # ---------------------------------------------------------------------------
-# Java (Maven) -- real dependency:resolve (transitive deps included) so PSE
-# intercepts the Maven Central traffic
+# Java (Maven) -- resolve direct deps so PSE intercepts the Maven Central
+# traffic. Uses `dependency:go-offline -DexcludeTransitive=true` (the command
+# known to show up in the PSE UI on GitHub Actions). Includes a diagnostic
+# block + conditional JVM CA import / proxy props to cover GitLab's MITM-proxy
+# interception mode (the JVM does not honor HTTP(S)_PROXY env by itself).
 # ---------------------------------------------------------------------------
 build-java:
   stage: build-2
@@ -172,24 +175,50 @@ build-java:
     - apt-get update && apt-get install -y curl
     - *baf_setup
     - cd maven
-    # Maven's Java HTTP client does NOT read HTTP_PROXY/HTTPS_PROXY env vars, so
-    # by default it talks to Central directly (or from ~/.m2 cache) and PSE sees
-    # nothing. Feed the PSE proxy to the JVM as system properties, and force a
-    # clean re-download so cached artifacts don't short-circuit the network.
+    # --- DIAGNOSTIC: reveal how PSE intercepts and whether the JVM can use it ---
+    - |
+      echo "===== PSE / proxy diagnostics ====="
+      echo "HTTP_PROXY=$HTTP_PROXY  HTTPS_PROXY=$HTTPS_PROXY  http_proxy=$http_proxy  https_proxy=$https_proxy"
+      echo "NO_PROXY=$NO_PROXY  no_proxy=$no_proxy"
+      echo "--- iptables NAT (transparent redirect?) ---"; (iptables -t nat -L -n 2>/dev/null | grep -iE 'REDIRECT|DNAT|3128' || echo "none / no permission")
+      echo "--- PSE CA in SYSTEM trust store? ---"; (ls -l /usr/local/share/ca-certificates/ 2>/dev/null; grep -rl -i 'invisirisk\|pse' /etc/ssl/certs/ 2>/dev/null | head || echo "no PSE cert file found by name")
+      echo "--- JAVA_HOME / cacerts ---"; echo "JAVA_HOME=$JAVA_HOME"; find / -name cacerts 2>/dev/null | head
+      echo "--- curl THROUGH proxy to Central (works if PSE MITM + system CA) ---"; curl -sS -o /dev/null -w "curl->central http_code=%{http_code}\n" https://repo.maven.apache.org/maven2/ || echo "curl failed"
+    # --- FIX: PSE is a MITM proxy. The JVM uses its OWN truststore (cacerts),
+    # NOT the system CA bundle where PSE installed its cert, so Maven either
+    # fails TLS through the proxy or bypasses it -> no interception. Import the
+    # PSE CA into the JVM truststore, then route Maven through the proxy WITHOUT
+    # the insecure-ssl flag so the traffic is genuinely decrypted/attributed.
+    - |
+      CACERTS="$(find "${JAVA_HOME:-/opt/java/openjdk}" -name cacerts 2>/dev/null | head -1)"
+      [ -z "$CACERTS" ] && CACERTS="$(find / -name cacerts 2>/dev/null | head -1)"
+      echo "Using JVM truststore: $CACERTS"
+      # Import every PSE/extra CA the bootstrap dropped into the system store
+      imported=0
+      for crt in /usr/local/share/ca-certificates/*.crt /etc/ssl/certs/pse*.pem; do
+        [ -f "$crt" ] || continue
+        alias="pse-$(basename "$crt" | tr -c 'A-Za-z0-9' '-')-$imported"
+        if keytool -importcert -noprompt -trustcacerts -alias "$alias" \
+             -file "$crt" -keystore "$CACERTS" -storepass changeit 2>/dev/null; then
+          echo "Imported $crt into JVM truststore as $alias"; imported=$((imported+1))
+        fi
+      done
+      echo "Imported $imported CA cert(s) into the JVM truststore"
     - |
       PROXY_URL="${HTTPS_PROXY:-${https_proxy:-${HTTP_PROXY:-${http_proxy:-}}}}"
       if [ -n "$PROXY_URL" ]; then
-        # strip scheme, split host:port
         hostport="${PROXY_URL#*://}"; hostport="${hostport%/}"
         phost="${hostport%%:*}"; pport="${hostport##*:}"
-        echo "Routing Maven through PSE proxy $phost:$pport"
-        export MAVEN_OPTS="-Dhttp.proxyHost=$phost -Dhttp.proxyPort=$pport -Dhttps.proxyHost=$phost -Dhttps.proxyPort=$pport -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true"
+        echo "Routing Maven through PSE proxy $phost:$pport (trusted cert, no insecure flag)"
+        # nonProxyHosts empty; NO ssl.insecure flag so PSE actually decrypts the TLS
+        export MAVEN_OPTS="-Dhttp.proxyHost=$phost -Dhttp.proxyPort=$pport -Dhttps.proxyHost=$phost -Dhttps.proxyPort=$pport"
       else
-        echo "No proxy env found; proceeding without explicit Maven proxy props"
+        echo "WARN: no proxy env found; Maven traffic will not be intercepted"
       fi
-      # Force fresh resolution through the proxy (-U updates, empty local repo)
-      mvn -U -Dmaven.repo.local=./.m2-fresh dependency:resolve
-      mvn -Dmaven.repo.local=./.m2-fresh dependency:tree || true
+      # Match the command that is known to appear in the PSE UI on GitHub
+      # Actions: direct dependencies only, into a fresh local repo so every
+      # fetch goes over the network (through PSE) instead of the ~/.m2 cache.
+      mvn -U -Dmaven.repo.local=./.m2-fresh dependency:go-offline -DexcludeTransitive=true
     - *baf_cleanup
 
 # ---------------------------------------------------------------------------
