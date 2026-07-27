@@ -193,7 +193,26 @@ build-php:
     - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
     - *baf_setup
     - cd php
-    - composer install --no-scripts --no-interaction
+    # The PSE proxy can be briefly unavailable to Composer's requests, giving
+    # curl error 7 (connect failed). Make Composer tolerant: longer connect
+    # timeout, more internal retries, and an outer retry loop so a transient
+    # proxy blip does not fail the job. Traffic still routes through PSE.
+    - export COMPOSER_DISABLE_NETWORK_ERROR_HANDLING=0
+    - |
+      composer config --global process-timeout 900
+      # Retry the whole install up to 5 times with backoff on proxy/network errors
+      n=0; max=5
+      until [ "$n" -ge "$max" ]; do
+        if composer install --no-scripts --no-interaction --prefer-dist; then
+          echo "composer install succeeded"; break
+        fi
+        n=$((n+1))
+        echo "composer install attempt $n/$max failed (likely proxy connect); retrying in $((n*5))s..."
+        sleep $((n*5))
+      done
+      if [ "$n" -ge "$max" ]; then
+        echo "ERROR: composer install failed after $max attempts (PSE proxy connectivity)"; exit 1
+      fi
     - composer show || true
     - *baf_cleanup
   artifacts:
