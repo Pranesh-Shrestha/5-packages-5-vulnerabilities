@@ -12,9 +12,9 @@
     <!-- 5 Maven artifacts, each with exactly one CVE -->
     <dependencies>
         <dependency>
-            <groupId>org.geysermc.geyser</groupId>
-            <artifactId>core</artifactId>
-            <version>2.9.2</version> <!-- CVE-2026-42188 -->
+            <groupId>eu.hinsch</groupId>
+            <artifactId>spring-boot-actuator-logview</artifactId>
+            <version>0.2.12</version> <!-- CVE-2021-21234 -->
         </dependency>
         <dependency>
             <groupId>org.dromara.warm</groupId>
@@ -30,6 +30,7 @@
             <groupId>org.mengyun</groupId>
             <artifactId>tcc-transaction</artifactId>
             <version>2.1.0</version> <!-- CVE-2026-9497 -->
+            <type>pom</type> <!-- published as pom aggregator, no jar on Central -->
         </dependency>
         <dependency>
             <groupId>com.github.ulisesbocchio</groupId>
