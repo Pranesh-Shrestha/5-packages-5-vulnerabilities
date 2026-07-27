@@ -172,9 +172,24 @@ build-java:
     - apt-get update && apt-get install -y curl
     - *baf_setup
     - cd maven
-    # Real dependency resolution so PSE intercepts the Maven Central traffic
-    - mvn -q dependency:resolve
-    - mvn -q dependency:tree || true
+    # Maven's Java HTTP client does NOT read HTTP_PROXY/HTTPS_PROXY env vars, so
+    # by default it talks to Central directly (or from ~/.m2 cache) and PSE sees
+    # nothing. Feed the PSE proxy to the JVM as system properties, and force a
+    # clean re-download so cached artifacts don't short-circuit the network.
+    - |
+      PROXY_URL="${HTTPS_PROXY:-${https_proxy:-${HTTP_PROXY:-${http_proxy:-}}}}"
+      if [ -n "$PROXY_URL" ]; then
+        # strip scheme, split host:port
+        hostport="${PROXY_URL#*://}"; hostport="${hostport%/}"
+        phost="${hostport%%:*}"; pport="${hostport##*:}"
+        echo "Routing Maven through PSE proxy $phost:$pport"
+        export MAVEN_OPTS="-Dhttp.proxyHost=$phost -Dhttp.proxyPort=$pport -Dhttps.proxyHost=$phost -Dhttps.proxyPort=$pport -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true"
+      else
+        echo "No proxy env found; proceeding without explicit Maven proxy props"
+      fi
+      # Force fresh resolution through the proxy (-U updates, empty local repo)
+      mvn -U -Dmaven.repo.local=./.m2-fresh dependency:resolve
+      mvn -Dmaven.repo.local=./.m2-fresh dependency:tree || true
     - *baf_cleanup
 
 # ---------------------------------------------------------------------------
