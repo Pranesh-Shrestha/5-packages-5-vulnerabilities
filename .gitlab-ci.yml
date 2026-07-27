@@ -1,8 +1,7 @@
-# One job per language. Each job runs a REAL package-manager install/restore
-# so PSE (InvisiRisk) can intercept and attribute the package-registry traffic.
-# Each manifest declares 5 target packages (one unique CVE each); real installs
-# also resolve transitive dependencies, which is what PSE needs to observe.
-# Every job is instrumented with PSE via .baf_setup / .baf_cleanup.
+# One job per language. Each job fetches ONLY its 5 listed packages with
+# dependency resolution turned OFF, so a scanner reading the manifest sees
+# exactly 5 packages and 5 CVEs — no transitive dependencies are pulled.
+# Every job is instrumented with PSE (InvisiRisk) via .baf_setup / .baf_cleanup.
 
 stages:
   - build-1
@@ -41,9 +40,9 @@ variables:
     options: ["3.0", "3.1", "3.2", "3.3"]
     description: "Ruby version"
   RUST_VERSION:
-    value: "1.85"
-    options: ["1.79", "1.82", "1.85", "1.90"]
-    description: "Rust version (>= 1.85 needed for edition2024 transitive deps)"
+    value: "1.79"
+    options: ["1.77", "1.78", "1.79"]
+    description: "Rust version"
   SKIP_JAVASCRIPT:
     value: "false"
     options: ["true", "false"]
@@ -85,12 +84,10 @@ variables:
 .baf_cleanup: &baf_cleanup
   - pse-data-collector cleanup
 
-# ===== Install all technologies (real package managers, PSE intercepts) =====
-# Each manifest declares 5 target packages (one CVE each). Real installs also
-# pull transitive dependencies, which is what PSE needs to observe/intercept.
+# ============= Fetch all technologies (5 packages / 5 CVEs each) =============
 
 # ---------------------------------------------------------------------------
-# JavaScript (npm) -- real install so PSE intercepts the registry traffic
+# JavaScript (npm) -- npm pack downloads only the named tarballs, no deps
 # ---------------------------------------------------------------------------
 build-javascript:
   stage: build-1
@@ -101,12 +98,15 @@ build-javascript:
     - apt-get update && apt-get install -y curl
     - *baf_setup
     - cd npm
-    - npm install --no-audit --no-fund
-    - npm ls --all || true
+    - npm pack growl@1.10.1 ini@1.3.5 y18n@5.0.4 hosted-git-info@2.8.8 trim-newlines@3.0.0
+    - ls -1 *.tgz
     - *baf_cleanup
+  artifacts:
+    paths:
+      - npm/*.tgz
 
 # ---------------------------------------------------------------------------
-# Python (PyPI) -- real install so PSE intercepts the PyPI traffic
+# Python (PyPI) -- pip download --no-deps
 # ---------------------------------------------------------------------------
 build-python:
   stage: build-1
@@ -118,12 +118,15 @@ build-python:
     - *baf_setup
     - cd pypi
     - python -m pip install --upgrade pip
-    - pip install -r requirements.txt
-    - pip list
+    - pip download --no-deps -r requirements.txt -d ./wheels
+    - ls -1 ./wheels
     - *baf_cleanup
+  artifacts:
+    paths:
+      - pypi/wheels/
 
 # ---------------------------------------------------------------------------
-# .NET (NuGet) -- real restore so PSE intercepts the NuGet traffic
+# .NET (NuGet) -- direct .nupkg download from the flat-container API (no deps)
 # ---------------------------------------------------------------------------
 build-dotnet:
   stage: build-1
@@ -134,12 +137,26 @@ build-dotnet:
     - apt-get update && apt-get install -y curl
     - *baf_setup
     - cd dotnet
-    - dotnet restore packages.csproj
+    - |
+      for pkg in \
+        "Steeltoe.Configuration.Encryption:4.1.0" \
+        "AngleSharp:1.4.0" \
+        "Datadog.Trace:3.42.0" \
+        "Steeltoe.Configuration.Abstractions:4.1.0" \
+        "Steeltoe.Security.Authentication.CloudFoundryBase:3.3.0"; do
+        id="${pkg%%:*}"; ver="${pkg##*:}"
+        lid="$(echo "$id" | tr '[:upper:]' '[:lower:]')"
+        curl -sSL -o "${id}.${ver}.nupkg" \
+          "https://api.nuget.org/v3-flatcontainer/${lid}/${ver}/${lid}.${ver}.nupkg"
+      done
+    - ls -1 *.nupkg
     - *baf_cleanup
+  artifacts:
+    paths:
+      - dotnet/*.nupkg
 
 # ---------------------------------------------------------------------------
-# Go -- real module download (declared modules + transitive graph) so PSE
-# intercepts the proxy.golang.org traffic
+# Go -- go mod download fetches ONLY the named modules, not their deps
 # ---------------------------------------------------------------------------
 build-go:
   stage: build-1
@@ -152,19 +169,20 @@ build-go:
     - apt-get update && apt-get install -y curl
     - *baf_setup
     - cd go
-    # Real module resolution so PSE intercepts the proxy.golang.org traffic.
-    # No `go mod tidy` (no .go source, so tidy would strip the requires).
-    # Download the declared modules plus their transitive graph.
-    - go mod download -x
-    - go mod graph || true
+    - pwd
+    - ls -la
+    - |
+      go mod download -x \
+        github.com/gorilla/schema@v1.4.0 \
+        github.com/valyala/fasthttp@v1.33.0 \
+        github.com/emicklei/go-restful/v3@v3.7.4 \
+        github.com/gin-contrib/cors@v1.5.0 \
+        github.com/gorilla/handlers@v1.2.1
+    - ls -1 "$(go env GOMODCACHE)/cache/download" || true
     - *baf_cleanup
 
 # ---------------------------------------------------------------------------
-# Java (Maven) -- resolve direct deps so PSE intercepts the Maven Central
-# traffic. Uses `dependency:go-offline -DexcludeTransitive=true` (the command
-# known to show up in the PSE UI on GitHub Actions). Includes a diagnostic
-# block + conditional JVM CA import / proxy props to cover GitLab's MITM-proxy
-# interception mode (the JVM does not honor HTTP(S)_PROXY env by itself).
+# Java (Maven) -- dependency:get with -Dtransitive=false (no transitive deps)
 # ---------------------------------------------------------------------------
 build-java:
   stage: build-2
@@ -175,57 +193,18 @@ build-java:
     - apt-get update && apt-get install -y curl
     - *baf_setup
     - cd maven
-    # --- DIAGNOSTIC: reveal how PSE intercepts and whether the JVM can use it ---
-    - |
-      echo "===== PSE / proxy diagnostics ====="
-      echo "HTTP_PROXY=$HTTP_PROXY  HTTPS_PROXY=$HTTPS_PROXY  http_proxy=$http_proxy  https_proxy=$https_proxy"
-      echo "NO_PROXY=$NO_PROXY  no_proxy=$no_proxy"
-      echo "--- iptables NAT (transparent redirect?) ---"; (iptables -t nat -L -n 2>/dev/null | grep -iE 'REDIRECT|DNAT|3128' || echo "none / no permission")
-      echo "--- PSE CA in SYSTEM trust store? ---"; (ls -l /usr/local/share/ca-certificates/ 2>/dev/null; grep -rl -i 'invisirisk\|pse' /etc/ssl/certs/ 2>/dev/null | head || echo "no PSE cert file found by name")
-      echo "--- JAVA_HOME / cacerts ---"; echo "JAVA_HOME=$JAVA_HOME"; find / -name cacerts 2>/dev/null | head
-      echo "--- curl THROUGH proxy to Central (works if PSE MITM + system CA) ---"; curl -sS -o /dev/null -w "curl->central http_code=%{http_code}\n" https://repo.maven.apache.org/maven2/ || echo "curl failed"
-    # --- FIX: PSE is a MITM proxy. The JVM uses its OWN truststore (cacerts),
-    # NOT the system CA bundle where PSE installed its cert, so Maven either
-    # fails TLS through the proxy or bypasses it -> no interception. Import the
-    # PSE CA into the JVM truststore, then route Maven through the proxy WITHOUT
-    # the insecure-ssl flag so the traffic is genuinely decrypted/attributed.
-    - |
-      CACERTS="$(find "${JAVA_HOME:-/opt/java/openjdk}" -name cacerts 2>/dev/null | head -1)"
-      [ -z "$CACERTS" ] && CACERTS="$(find / -name cacerts 2>/dev/null | head -1)"
-      echo "Using JVM truststore: $CACERTS"
-      # Import every PSE/extra CA the bootstrap dropped into the system store
-      imported=0
-      for crt in /usr/local/share/ca-certificates/*.crt /etc/ssl/certs/pse*.pem; do
-        [ -f "$crt" ] || continue
-        alias="pse-$(basename "$crt" | tr -c 'A-Za-z0-9' '-')-$imported"
-        if keytool -importcert -noprompt -trustcacerts -alias "$alias" \
-             -file "$crt" -keystore "$CACERTS" -storepass changeit 2>/dev/null; then
-          echo "Imported $crt into JVM truststore as $alias"; imported=$((imported+1))
-        fi
-      done
-      echo "Imported $imported CA cert(s) into the JVM truststore"
-    - |
-      PROXY_URL="${HTTPS_PROXY:-${https_proxy:-${HTTP_PROXY:-${http_proxy:-}}}}"
-      if [ -n "$PROXY_URL" ]; then
-        hostport="${PROXY_URL#*://}"; hostport="${hostport%/}"
-        phost="${hostport%%:*}"; pport="${hostport##*:}"
-        echo "Routing Maven through PSE proxy $phost:$pport (trusted cert, no insecure flag)"
-        # nonProxyHosts empty; NO ssl.insecure flag so PSE actually decrypts the TLS
-        export MAVEN_OPTS="-Dhttp.proxyHost=$phost -Dhttp.proxyPort=$pport -Dhttps.proxyHost=$phost -Dhttps.proxyPort=$pport"
-      else
-        echo "WARN: no proxy env found; Maven traffic will not be intercepted"
-      fi
-      # Match the command that is known to appear in the PSE UI on GitHub
-      # Actions: direct dependencies only, into a fresh local repo so every
-      # fetch goes over the network (through PSE) instead of the ~/.m2 cache.
-      mvn -U -Dmaven.repo.local=./.m2-fresh dependency:go-offline -DexcludeTransitive=true
+    - mvn -q dependency:get -Dtransitive=false -Dartifact=org.geysermc.geyser:core:2.9.2 || true
+    - mvn -q dependency:get -Dtransitive=false -Dartifact=org.dromara.warm:warm-flow-plugin-modes-sb:1.8.4 || true
+    - mvn -q dependency:get -Dtransitive=false -Dartifact=com.vaadin:flow-gradle-plugin:25.1.4 || true
+    - mvn -q dependency:get -Dtransitive=false -Dartifact=org.mengyun:tcc-transaction:2.1.0 || true
+    - mvn -q dependency:get -Dtransitive=false -Dartifact=com.github.ulisesbocchio:jasypt-spring-boot:4.0.4 || true
+    - find ~/.m2/repository -name '*.jar' | sort
     - *baf_cleanup
 
 # ---------------------------------------------------------------------------
-# PHP (Composer) -- real composer install so PSE intercepts the Packagist
-# traffic. NOTE: this drives traffic through PSE's Composer handler, which is
-# where the `concurrent map writes` crash occurred; if PSE crashes here again
-# it is an InvisiRisk product bug, not a manifest/CI issue.
+# PHP (Composer) -- download each package's dist tarball directly from the
+# Packagist API. This pulls ONLY the 5 named packages (no dependency
+# resolution) and avoids running `composer install` entirely.
 # ---------------------------------------------------------------------------
 build-php:
   stage: build-2
@@ -233,23 +212,37 @@ build-php:
   rules:
     - if: '$SKIP_PHP != "true"'
   script:
-    - apt-get update && apt-get install -y curl git unzip
-    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - apt-get update && apt-get install -y curl jq
     - *baf_setup
     - cd php
-    # Plain composer install (works as-is in other CI). One retry to survive a
-    # transient PSE-proxy connect blip (curl error 7) seen in GitLab.
-    - composer install || { echo "retrying composer install after proxy blip..."; sleep 10; composer install; }
-    - composer show || true
+    - |
+      for pkg in \
+        "mediawiki/maps:12.1.2" \
+        "aimeos/pagible:0.10.3" \
+        "php-standard-library/h2:6.1.1" \
+        "symfony/ux-icons:2.36.0" \
+        "symfony/ux-toolkit:2.36.0"; do
+        name="${pkg%:*}"; ver="${pkg##*:}"
+        # Resolve the exact version's dist URL from the Packagist metadata (no deps resolved)
+        url="$(curl -sSL "https://repo.packagist.org/p2/${name}.json" \
+          | jq -r --arg v "$ver" '.packages[][] | select(.version==$v or .version==("v"+$v)) | .dist.url' | head -1)"
+        out="$(echo "$name" | tr '/' '-')-${ver}.zip"
+        if [ -n "$url" ] && [ "$url" != "null" ]; then
+          echo "Downloading $name $ver"
+          curl -sSL -o "$out" "$url"
+        else
+          echo "WARN: could not resolve dist URL for $name $ver"
+        fi
+      done
+    - ls -1 *.zip 2>/dev/null || echo "manifest-only (composer.json pins the 5 packages)"
     - *baf_cleanup
   artifacts:
     paths:
+      - php/*.zip
       - php/composer.json
-      - php/composer.lock
 
 # ---------------------------------------------------------------------------
-# Ruby (RubyGems) -- real bundle install (deps included) so PSE intercepts
-# the rubygems.org traffic
+# Ruby (RubyGems) -- gem install --ignore-dependencies (only the named gem)
 # ---------------------------------------------------------------------------
 build-ruby:
   stage: build-2
@@ -260,15 +253,19 @@ build-ruby:
     - apt-get update && apt-get install -y curl
     - *baf_setup
     - cd ruby
-    # Real bundle install so PSE intercepts the rubygems.org traffic
-    - bundle install
-    - bundle list || true
+    - gem install fluent-plugin-s3 -v 1.8.4 --ignore-dependencies --no-document
+    - gem install fluent-plugin-opentelemetry -v 0.5.2 --ignore-dependencies --no-document
+    - gem install sidekiq-cron -v 2.3.1 --ignore-dependencies --no-document
+    - gem install katalyst-koi -v 4.19.0 --ignore-dependencies --no-document
+    - gem install jwt -v 2.10.2 --ignore-dependencies --no-document
+    - gem list --local
     - *baf_cleanup
 
 # ---------------------------------------------------------------------------
-# Rust (Cargo) -- real cargo fetch so PSE intercepts the crates.io traffic.
-# Uses a newer Rust image so transitive deps needing edition2024 (e.g.
-# getrandom) parse correctly.
+# Rust (Cargo) -- download each crate's .crate tarball directly from
+# static.crates.io. This fetches ONLY the 5 pinned crates (no transitive
+# dependency resolution), so it never trips on a transitive dep that needs a
+# newer Cargo edition (e.g. getrandom requiring edition2024).
 # ---------------------------------------------------------------------------
 build-cargo:
   stage: build-2
@@ -279,10 +276,20 @@ build-cargo:
     - apt-get update && apt-get install -y curl
     - *baf_setup
     - cd cargo
-    - cargo generate-lockfile
-    - cargo fetch --locked || cargo fetch
-    - grep -A1 '^name' Cargo.lock | head -60
+    - |
+      for crate in \
+        "libsqlite3-sys:0.25.0" \
+        "lz4-sys:1.9.3" \
+        "ouch:0.3.1" \
+        "tonic:0.12.2" \
+        "users:0.11.0"; do
+        name="${crate%:*}"; ver="${crate##*:}"
+        echo "Downloading $name $ver"
+        curl -sSL -o "${name}-${ver}.crate" \
+          "https://static.crates.io/crates/${name}/${name}-${ver}.crate"
+      done
+    - ls -1 *.crate
     - *baf_cleanup
   artifacts:
     paths:
-      - cargo/Cargo.lock
+      - cargo/*.crate
