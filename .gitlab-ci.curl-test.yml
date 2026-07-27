@@ -1,0 +1,172 @@
+# MINIMAL TEST PIPELINE
+# Each job does nothing but a single curl to its ecosystem's registry, wrapped
+# in the PSE setup/cleanup. Use this to smoke-test that PSE bootstraps,
+# intercepts a simple HTTPS request, and cleans up per language image.
+# To use: rename this file to .gitlab-ci.yml (or point CI at it).
+
+stages:
+  - build-1
+  - build-2
+
+workflow:
+  name: "PSE curl smoke test"
+
+variables:
+  PYTHON_VERSION:
+    value: "3.11"
+    options: ["3.9", "3.10", "3.11", "3.12"]
+    description: "Python version"
+  DOTNET_VERSION:
+    value: "8.0"
+    options: ["6.0", "7.0", "8.0"]
+    description: ".NET version"
+  GO_VERSION:
+    value: "1.22"
+    options: ["1.20", "1.21", "1.22"]
+    description: "Go version"
+  JAVA_VERSION:
+    value: "17"
+    options: ["11", "17", "21"]
+    description: "Java version"
+  PHP_VERSION:
+    value: "8.2"
+    options: ["8.1", "8.2", "8.3"]
+    description: "PHP version"
+  RUBY_VERSION:
+    value: "3.3"
+    options: ["3.0", "3.1", "3.2", "3.3"]
+    description: "Ruby version"
+  RUST_VERSION:
+    value: "1.79"
+    options: ["1.77", "1.78", "1.79"]
+    description: "Rust version"
+  SKIP_JAVASCRIPT:
+    value: "false"
+    options: ["true", "false"]
+    description: "Skip JavaScript"
+  SKIP_PYTHON:
+    value: "false"
+    options: ["true", "false"]
+    description: "Skip Python"
+  SKIP_DOTNET:
+    value: "false"
+    options: ["true", "false"]
+    description: "Skip .NET"
+  SKIP_GO:
+    value: "false"
+    options: ["true", "false"]
+    description: "Skip Go"
+  SKIP_JAVA:
+    value: "false"
+    options: ["true", "false"]
+    description: "Skip Java"
+  SKIP_PHP:
+    value: "false"
+    options: ["true", "false"]
+    description: "Skip PHP"
+  SKIP_RUBY:
+    value: "false"
+    options: ["true", "false"]
+    description: "Skip Ruby"
+  SKIP_CARGO:
+    value: "false"
+    options: ["true", "false"]
+    description: "Skip Cargo"
+
+.baf_setup: &baf_setup
+  - |
+    curl -sSf -H "x-api-key: ${IR_TOKEN}" "https://app.dev.invisirisk.com/ingestionapi/v1/pse/bootstrap" | bash
+    . /tmp/ir_envs
+
+.baf_cleanup: &baf_cleanup
+  - pse-data-collector cleanup
+
+# ============= Each job: one curl to its ecosystem registry =============
+
+build-javascript:
+  stage: build-1
+  image: node:20
+  rules:
+    - if: '$SKIP_JAVASCRIPT != "true"'
+  script:
+    - apt-get update && apt-get install -y curl
+    - *baf_setup
+    - curl -sSL -o /dev/null -w "npm registry -> %{http_code}\n" https://registry.npmjs.org/ini
+    - *baf_cleanup
+
+build-python:
+  stage: build-1
+  image: python:${PYTHON_VERSION}
+  rules:
+    - if: '$SKIP_PYTHON != "true"'
+  script:
+    - apt-get update && apt-get install -y curl
+    - *baf_setup
+    - curl -sSL -o /dev/null -w "pypi -> %{http_code}\n" https://pypi.org/pypi/validators/json
+    - *baf_cleanup
+
+build-dotnet:
+  stage: build-1
+  image: mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}
+  rules:
+    - if: '$SKIP_DOTNET != "true"'
+  script:
+    - apt-get update && apt-get install -y curl
+    - *baf_setup
+    - curl -sSL -o /dev/null -w "nuget -> %{http_code}\n" https://api.nuget.org/v3/index.json
+    - *baf_cleanup
+
+build-go:
+  stage: build-1
+  image: golang:${GO_VERSION}
+  rules:
+    - if: '$SKIP_GO != "true"'
+  script:
+    - apt-get update && apt-get install -y curl
+    - *baf_setup
+    - curl -sSL -o /dev/null -w "go proxy -> %{http_code}\n" https://proxy.golang.org/github.com/gorilla/schema/@v/v1.4.0.info
+    - *baf_cleanup
+
+build-java:
+  stage: build-2
+  image: maven:3.9-eclipse-temurin-${JAVA_VERSION}
+  rules:
+    - if: '$SKIP_JAVA != "true"'
+  script:
+    - apt-get update && apt-get install -y curl
+    - *baf_setup
+    - curl -sSL -o /dev/null -w "maven central -> %{http_code}\n" https://repo.maven.apache.org/maven2/
+    - *baf_cleanup
+
+build-php:
+  stage: build-2
+  image: php:${PHP_VERSION}-cli
+  rules:
+    - if: '$SKIP_PHP != "true"'
+  script:
+    - apt-get update && apt-get install -y curl
+    - *baf_setup
+    - curl -sSL -o /dev/null -w "packagist -> %{http_code}\n" https://repo.packagist.org/p2/symfony/ux-icons.json
+    - *baf_cleanup
+
+build-ruby:
+  stage: build-2
+  image: ruby:${RUBY_VERSION}
+  rules:
+    - if: '$SKIP_RUBY != "true"'
+  script:
+    - apt-get update && apt-get install -y curl
+    - *baf_setup
+    - curl -sSL -o /dev/null -w "rubygems -> %{http_code}\n" https://rubygems.org/api/v1/gems/jwt.json
+    - *baf_cleanup
+
+build-cargo:
+  stage: build-2
+  image: rust:${RUST_VERSION}
+  rules:
+    - if: '$SKIP_CARGO != "true"'
+  script:
+    - apt-get update && apt-get install -y curl
+    - *baf_setup
+    - curl -sSL -o /dev/null -w "crates.io -> %{http_code}\n" https://crates.io/api/v1/crates/tonic
+    - *baf_cleanup
