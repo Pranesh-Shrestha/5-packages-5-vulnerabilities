@@ -98,9 +98,6 @@ jobs:
           api_url: "https://app.dev.invisirisk.com"
           app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
       - run: curl -sSL -o /dev/null -w "npm registry -> %{http_code}\n" https://registry.npmjs.org/ini
-      - name: PSE cleanup
-        if: always()
-        run: pse-data-collector cleanup
 
   build-python:
     if: ${{ inputs.SKIP_PYTHON != true }}
@@ -115,9 +112,7 @@ jobs:
           api_url: "https://app.dev.invisirisk.com"
           app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
       - run: curl -sSL -o /dev/null -w "pypi -> %{http_code}\n" https://pypi.org/pypi/validators/json
-      - name: PSE cleanup
-        if: always()
-        run: pse-data-collector cleanup
+
 
   build-dotnet:
     if: ${{ inputs.SKIP_DOTNET != true }}
@@ -132,9 +127,7 @@ jobs:
           api_url: "https://app.dev.invisirisk.com"
           app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
       - run: curl -sSL -o /dev/null -w "nuget -> %{http_code}\n" https://api.nuget.org/v3/index.json
-      - name: PSE cleanup
-        if: always()
-        run: pse-data-collector cleanup
+
 
   build-go:
     if: ${{ inputs.SKIP_GO != true }}
@@ -149,9 +142,7 @@ jobs:
           api_url: "https://app.dev.invisirisk.com"
           app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
       - run: curl -sSL -o /dev/null -w "go proxy -> %{http_code}\n" https://proxy.golang.org/github.com/gorilla/schema/@v/v1.4.0.info
-      - name: PSE cleanup
-        if: always()
-        run: pse-data-collector cleanup
+
 
   build-java:
     if: ${{ inputs.SKIP_JAVA != true }}
@@ -166,9 +157,7 @@ jobs:
           api_url: "https://app.dev.invisirisk.com"
           app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
       - run: curl -sSL -o /dev/null -w "maven central -> %{http_code}\n" https://repo.maven.apache.org/maven2/
-      - name: PSE cleanup
-        if: always()
-        run: pse-data-collector cleanup
+
 
   build-php:
     if: ${{ inputs.SKIP_PHP != true }}
@@ -183,9 +172,7 @@ jobs:
           api_url: "https://app.dev.invisirisk.com"
           app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
       - run: curl -sSL -o /dev/null -w "packagist -> %{http_code}\n" https://repo.packagist.org/p2/symfony/ux-icons.json
-      - name: PSE cleanup
-        if: always()
-        run: pse-data-collector cleanup
+
 
   build-ruby:
     if: ${{ inputs.SKIP_RUBY != true }}
@@ -200,9 +187,6 @@ jobs:
           api_url: "https://app.dev.invisirisk.com"
           app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
       - run: curl -sSL -o /dev/null -w "rubygems -> %{http_code}\n" https://rubygems.org/api/v1/gems/jwt.json
-      - name: PSE cleanup
-        if: always()
-        run: pse-data-collector cleanup
 
   build-cargo:
     if: ${{ inputs.SKIP_CARGO != true }}
@@ -217,6 +201,3 @@ jobs:
           api_url: "https://app.dev.invisirisk.com"
           app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
       - run: curl -sSL -o /dev/null -w "crates.io -> %{http_code}\n" https://crates.io/api/v1/crates/tonic
-      - name: PSE cleanup
-        if: always()
-        run: pse-data-collector cleanup
