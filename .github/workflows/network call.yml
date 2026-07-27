@@ -1,0 +1,222 @@
+# MINIMAL TEST WORKFLOW (GitHub Actions equivalent of .gitlab-ci.curl-test.yml)
+# Each job does nothing but a single curl to its ecosystem's registry, wrapped
+# in PSE (InvisiRisk) setup/cleanup. Smoke-tests that PSE bootstraps,
+# intercepts a simple HTTPS request, and cleans up per language image.
+#
+# Requires repository secret:
+#   IR_APP_TOKEN - your InvisiRisk app token (equivalent to GitLab's IR_TOKEN).
+#                  Add under Settings > Secrets and variables > Actions.
+# api_url is set to the dev endpoint; the pse-action injects the intercepting
+# proxy + CA into each job automatically.
+
+name: "PSE curl smoke test"
+
+on:
+  workflow_dispatch:
+    inputs:
+      PYTHON_VERSION:
+        description: "Python version"
+        type: choice
+        default: "3.11"
+        options: ["3.9", "3.10", "3.11", "3.12"]
+      DOTNET_VERSION:
+        description: ".NET version"
+        type: choice
+        default: "8.0"
+        options: ["6.0", "7.0", "8.0"]
+      GO_VERSION:
+        description: "Go version"
+        type: choice
+        default: "1.22"
+        options: ["1.20", "1.21", "1.22"]
+      JAVA_VERSION:
+        description: "Java version"
+        type: choice
+        default: "17"
+        options: ["11", "17", "21"]
+      PHP_VERSION:
+        description: "PHP version"
+        type: choice
+        default: "8.2"
+        options: ["8.1", "8.2", "8.3"]
+      RUBY_VERSION:
+        description: "Ruby version"
+        type: choice
+        default: "3.3"
+        options: ["3.0", "3.1", "3.2", "3.3"]
+      RUST_VERSION:
+        description: "Rust version"
+        type: choice
+        default: "1.79"
+        options: ["1.77", "1.78", "1.79"]
+      SKIP_JAVASCRIPT:
+        description: "Skip JavaScript"
+        type: boolean
+        default: false
+      SKIP_PYTHON:
+        description: "Skip Python"
+        type: boolean
+        default: false
+      SKIP_DOTNET:
+        description: "Skip .NET"
+        type: boolean
+        default: false
+      SKIP_GO:
+        description: "Skip Go"
+        type: boolean
+        default: false
+      SKIP_JAVA:
+        description: "Skip Java"
+        type: boolean
+        default: false
+      SKIP_PHP:
+        description: "Skip PHP"
+        type: boolean
+        default: false
+      SKIP_RUBY:
+        description: "Skip Ruby"
+        type: boolean
+        default: false
+      SKIP_CARGO:
+        description: "Skip Cargo"
+        type: boolean
+        default: false
+
+# ============= Each job: one curl to its ecosystem registry =============
+
+jobs:
+  build-javascript:
+    if: ${{ inputs.SKIP_JAVASCRIPT != true }}
+    runs-on: ubuntu-latest
+    container:
+      image: node:20
+    steps:
+      - run: apt-get update && apt-get install -y curl
+      - name: Set up PSE
+        uses: invisirisk/pse-action@develop
+        with:
+          api_url: "https://app.dev.invisirisk.com"
+          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+      - run: curl -sSL -o /dev/null -w "npm registry -> %{http_code}\n" https://registry.npmjs.org/ini
+      - name: PSE cleanup
+        if: always()
+        run: pse-data-collector cleanup
+
+  build-python:
+    if: ${{ inputs.SKIP_PYTHON != true }}
+    runs-on: ubuntu-latest
+    container:
+      image: python:${{ inputs.PYTHON_VERSION || '3.11' }}
+    steps:
+      - run: apt-get update && apt-get install -y curl
+      - name: Set up PSE
+        uses: invisirisk/pse-action@develop
+        with:
+          api_url: "https://app.dev.invisirisk.com"
+          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+      - run: curl -sSL -o /dev/null -w "pypi -> %{http_code}\n" https://pypi.org/pypi/validators/json
+      - name: PSE cleanup
+        if: always()
+        run: pse-data-collector cleanup
+
+  build-dotnet:
+    if: ${{ inputs.SKIP_DOTNET != true }}
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/dotnet/sdk:${{ inputs.DOTNET_VERSION || '8.0' }}
+    steps:
+      - run: apt-get update && apt-get install -y curl
+      - name: Set up PSE
+        uses: invisirisk/pse-action@develop
+        with:
+          api_url: "https://app.dev.invisirisk.com"
+          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+      - run: curl -sSL -o /dev/null -w "nuget -> %{http_code}\n" https://api.nuget.org/v3/index.json
+      - name: PSE cleanup
+        if: always()
+        run: pse-data-collector cleanup
+
+  build-go:
+    if: ${{ inputs.SKIP_GO != true }}
+    runs-on: ubuntu-latest
+    container:
+      image: golang:${{ inputs.GO_VERSION || '1.22' }}
+    steps:
+      - run: apt-get update && apt-get install -y curl
+      - name: Set up PSE
+        uses: invisirisk/pse-action@develop
+        with:
+          api_url: "https://app.dev.invisirisk.com"
+          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+      - run: curl -sSL -o /dev/null -w "go proxy -> %{http_code}\n" https://proxy.golang.org/github.com/gorilla/schema/@v/v1.4.0.info
+      - name: PSE cleanup
+        if: always()
+        run: pse-data-collector cleanup
+
+  build-java:
+    if: ${{ inputs.SKIP_JAVA != true }}
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.9-eclipse-temurin-${{ inputs.JAVA_VERSION || '17' }}
+    steps:
+      - run: apt-get update && apt-get install -y curl
+      - name: Set up PSE
+        uses: invisirisk/pse-action@develop
+        with:
+          api_url: "https://app.dev.invisirisk.com"
+          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+      - run: curl -sSL -o /dev/null -w "maven central -> %{http_code}\n" https://repo.maven.apache.org/maven2/
+      - name: PSE cleanup
+        if: always()
+        run: pse-data-collector cleanup
+
+  build-php:
+    if: ${{ inputs.SKIP_PHP != true }}
+    runs-on: ubuntu-latest
+    container:
+      image: php:${{ inputs.PHP_VERSION || '8.2' }}-cli
+    steps:
+      - run: apt-get update && apt-get install -y curl
+      - name: Set up PSE
+        uses: invisirisk/pse-action@develop
+        with:
+          api_url: "https://app.dev.invisirisk.com"
+          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+      - run: curl -sSL -o /dev/null -w "packagist -> %{http_code}\n" https://repo.packagist.org/p2/symfony/ux-icons.json
+      - name: PSE cleanup
+        if: always()
+        run: pse-data-collector cleanup
+
+  build-ruby:
+    if: ${{ inputs.SKIP_RUBY != true }}
+    runs-on: ubuntu-latest
+    container:
+      image: ruby:${{ inputs.RUBY_VERSION || '3.3' }}
+    steps:
+      - run: apt-get update && apt-get install -y curl
+      - name: Set up PSE
+        uses: invisirisk/pse-action@develop
+        with:
+          api_url: "https://app.dev.invisirisk.com"
+          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+      - run: curl -sSL -o /dev/null -w "rubygems -> %{http_code}\n" https://rubygems.org/api/v1/gems/jwt.json
+      - name: PSE cleanup
+        if: always()
+        run: pse-data-collector cleanup
+
+  build-cargo:
+    if: ${{ inputs.SKIP_CARGO != true }}
+    runs-on: ubuntu-latest
+    container:
+      image: rust:${{ inputs.RUST_VERSION || '1.79' }}
+    steps:
+      - run: apt-get update && apt-get install -y curl
+      - name: Set up PSE
+        uses: invisirisk/pse-action@develop
+        with:
+          api_url: "https://app.dev.invisirisk.com"
+          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+      - run: curl -sSL -o /dev/null -w "crates.io -> %{http_code}\n" https://crates.io/api/v1/crates/tonic
+      - name: PSE cleanup
+        if: always()
+        run: pse-data-collector cleanup
