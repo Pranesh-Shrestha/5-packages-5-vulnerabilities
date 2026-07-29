@@ -95,8 +95,8 @@ jobs:
       - name: Set up PSE
         uses: invisirisk/pse-action@develop
         with:
-          api_url: "https://app.dev.invisirisk.com"
-          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+          api_url: "https://app.stage.invisirisk.com"
+          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
       - run: curl -sSL -o /dev/null -w "npm registry -> %{http_code}\n" https://registry.npmjs.org/ini
 
   build-python:
@@ -109,8 +109,8 @@ jobs:
       - name: Set up PSE
         uses: invisirisk/pse-action@develop
         with:
-          api_url: "https://app.dev.invisirisk.com"
-          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+          api_url: "https://app.stage.invisirisk.com"
+          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
       - run: curl -sSL -o /dev/null -w "pypi -> %{http_code}\n" https://pypi.org/pypi/validators/json
 
 
@@ -124,8 +124,8 @@ jobs:
       - name: Set up PSE
         uses: invisirisk/pse-action@develop
         with:
-          api_url: "https://app.dev.invisirisk.com"
-          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+          api_url: "https://app.stage.invisirisk.com"
+          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
       - run: curl -sSL -o /dev/null -w "nuget -> %{http_code}\n" https://api.nuget.org/v3/index.json
 
 
@@ -139,8 +139,8 @@ jobs:
       - name: Set up PSE
         uses: invisirisk/pse-action@develop
         with:
-          api_url: "https://app.dev.invisirisk.com"
-          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+          api_url: "https://app.stage.invisirisk.com"
+          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
       - run: curl -sSL -o /dev/null -w "go proxy -> %{http_code}\n" https://proxy.golang.org/github.com/gorilla/schema/@v/v1.4.0.info
 
 
@@ -154,8 +154,8 @@ jobs:
       - name: Set up PSE
         uses: invisirisk/pse-action@develop
         with:
-          api_url: "https://app.dev.invisirisk.com"
-          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+          api_url: "https://app.stage.invisirisk.com"
+          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
       - run: curl -sSL -o /dev/null -w "maven central -> %{http_code}\n" https://repo.maven.apache.org/maven2/
 
 
@@ -169,8 +169,8 @@ jobs:
       - name: Set up PSE
         uses: invisirisk/pse-action@develop
         with:
-          api_url: "https://app.dev.invisirisk.com"
-          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+          api_url: "https://app.stage.invisirisk.com"
+          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
       - run: curl -sSL -o /dev/null -w "packagist -> %{http_code}\n" https://repo.packagist.org/p2/symfony/ux-icons.json
 
 
@@ -184,8 +184,8 @@ jobs:
       - name: Set up PSE
         uses: invisirisk/pse-action@develop
         with:
-          api_url: "https://app.dev.invisirisk.com"
-          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+          api_url: "https://app.stage.invisirisk.com"
+          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
       - run: curl -sSL -o /dev/null -w "rubygems -> %{http_code}\n" https://rubygems.org/api/v1/gems/jwt.json
 
   build-cargo:
@@ -198,6 +198,6 @@ jobs:
       - name: Set up PSE
         uses: invisirisk/pse-action@develop
         with:
-          api_url: "https://app.dev.invisirisk.com"
-          app_token: hMbbLotlRrSp9P2wjYCuK340nWLuSV6XV6Fas7NTsyBYJcO8R90SxBWm1HbXTDlX0zVOtm5rvhtGsJrSVvti2Q
+          api_url: "https://app.stage.invisirisk.com"
+          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
       - run: curl -sSL -o /dev/null -w "crates.io -> %{http_code}\n" https://crates.io/api/v1/crates/tonic
