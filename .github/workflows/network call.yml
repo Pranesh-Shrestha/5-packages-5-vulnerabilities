@@ -96,16 +96,11 @@ jobs:
     container:
       image: node:20
     steps:
+      - run: apt-get update && apt-get install -y curl
       # ============= InvisiRisk Setup =============
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
-      # ============= InvisiRisk Setup End =============
-      - run: apt-get update && apt-get install -y curl
-
-
-
-
-          
+      # ============= InvisiRisk Setup End =============     
       - run: curl -sSL -o /dev/null -w "npm registry -> %{http_code}\n" https://registry.npmjs.org/ini
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://speed.hetzner.de/100MB.bin?d=$(echo hello | base64)" || true
 
@@ -115,19 +110,13 @@ jobs:
     container:
       image: python:${{ inputs.PYTHON_VERSION || '3.11' }}
     steps:
+      - run: apt-get update && apt-get install -y curl
       # ============= InvisiRisk Setup =============
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
-      # ============= InvisiRisk Setup End =============
-      - run: apt-get update && apt-get install -y curl
-
-
-
-
-          
+      # ============= InvisiRisk Setup End ============= 
       - run: curl -sSL -o /dev/null -w "pypi -> %{http_code}\n" https://pypi.org/pypi/validators/json
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://speed.cloudflare.com/__down?bytes=104857600" || true
-
 
   build-dotnet:
     if: ${{ inputs.SKIP_DOTNET != true }}
@@ -135,19 +124,14 @@ jobs:
     container:
       image: mcr.microsoft.com/dotnet/sdk:${{ inputs.DOTNET_VERSION || '8.0' }}
     steps:
+      - run: apt-get update && apt-get install -y curl
       # ============= InvisiRisk Setup =============
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
       # ============= InvisiRisk Setup End =============
-      - run: apt-get update && apt-get install -y curl
-
-
-
-
-          
+         
       - run: curl -sSL -o /dev/null -w "nuget -> %{http_code}\n" https://api.nuget.org/v3/index.json
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://ipv4.download.thinkbroadband.com/100MB.zip" || true
-
 
   build-go:
     if: ${{ inputs.SKIP_GO != true }}
@@ -155,20 +139,14 @@ jobs:
     container:
       image: golang:${{ inputs.GO_VERSION || '1.22' }}
     steps:
+      - run: apt-get update && apt-get install -y curl
       # ============= InvisiRisk Setup =============
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
       # ============= InvisiRisk Setup End =============
-      - run: apt-get update && apt-get install -y curl
-
-
-
-
           
       - run: curl -sSL -o /dev/null -w "go proxy -> %{http_code}\n" https://proxy.golang.org/github.com/gorilla/schema/@v/v1.4.0.info
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://registry.npmjs.org/express/-/express-4.18.2.tgz" || true
-
-
 
   build-java:
     if: ${{ inputs.SKIP_JAVA != true }}
@@ -176,19 +154,14 @@ jobs:
     container:
       image: maven:3.9-eclipse-temurin-${{ inputs.JAVA_VERSION || '17' }}
     steps:
+      - run: apt-get update && apt-get install -y curl
       # ============= InvisiRisk Setup =============
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
       # ============= InvisiRisk Setup End =============
-      - run: apt-get update && apt-get install -y curl
-
-
-
-
-          
+        
       - run: curl -sSL -o /dev/null -w "maven central -> %{http_code}\n" https://repo.maven.apache.org/maven2/
       - run: curl -v --connect-timeout 5 --max-time 15 -o /dev/null "https://this-host-does-not-exist.invalid/payload.bin" 2>>/tmp/curl_egress.log || true
-
 
   build-php:
     if: ${{ inputs.SKIP_PHP != true }}
@@ -196,19 +169,14 @@ jobs:
     container:
       image: php:${{ inputs.PHP_VERSION || '8.2' }}-cli
     steps:
+      - run: apt-get update && apt-get install -y curl
       # ============= InvisiRisk Setup =============
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
       # ============= InvisiRisk Setup End =============
-      - run: apt-get update && apt-get install -y curl
-
-
-
-
-          
+        
       - run: curl -sSL -o /dev/null -w "packagist -> %{http_code}\n" https://repo.packagist.org/p2/symfony/ux-icons.json
       - run: curl -v --connect-timeout 5 --max-time 15 -o /dev/null "https://198.51.100.42/data.bin" 2>>/tmp/curl_egress.log || true
-
 
   build-ruby:
     if: ${{ inputs.SKIP_RUBY != true }}
@@ -216,15 +184,11 @@ jobs:
     container:
       image: ruby:${{ inputs.RUBY_VERSION || '3.3' }}
     steps:
+      - run: apt-get update && apt-get install -y curl
       # ============= InvisiRisk Setup =============
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
       # ============= InvisiRisk Setup End =============
-      - run: apt-get update && apt-get install -y curl
-
-
-
-
           
       - run: curl -sSL -o /dev/null -w "rubygems -> %{http_code}\n" https://rubygems.org/api/v1/gems/jwt.json
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://proof.ovh.net/files/100Mb.dat" || true
@@ -235,15 +199,11 @@ jobs:
     container:
       image: rust:${{ inputs.RUST_VERSION || '1.79' }}
     steps:
+      - run: apt-get update && apt-get install -y curl
       # ============= InvisiRisk Setup =============
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
       # ============= InvisiRisk Setup End =============
-      - run: apt-get update && apt-get install -y curl
-
-
-
-
-          
+        
       - run: curl -sSL -o /dev/null -w "crates.io -> %{http_code}\n" https://crates.io/api/v1/crates/tonic
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://mirror.nforly.net/test/100MB.bin" || true
