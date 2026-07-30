@@ -106,7 +106,8 @@ jobs:
       # ============= InvisiRisk Setup End =============     
       - run: curl -sSL -o /dev/null -w "npm registry -> %{http_code}\n" https://registry.npmjs.org/ini
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://speed.hetzner.de/100MB.bin?d=$(echo hello | base64)" || true
-
+      - run: sleep 30
+      
   build-python:
     if: ${{ inputs.SKIP_PYTHON != true }}
     runs-on: ubuntu-latest
@@ -123,7 +124,7 @@ jobs:
       # ============= InvisiRisk Setup End ============= 
       - run: curl -sSL -o /dev/null -w "pypi -> %{http_code}\n" https://pypi.org/pypi/validators/json
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://speed.cloudflare.com/__down?bytes=104857600" || true
-
+      - run: sleep 30
   build-dotnet:
     if: ${{ inputs.SKIP_DOTNET != true }}
     runs-on: ubuntu-latest
@@ -141,7 +142,7 @@ jobs:
          
       - run: curl -sSL -o /dev/null -w "nuget -> %{http_code}\n" https://api.nuget.org/v3/index.json
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://ipv4.download.thinkbroadband.com/100MB.zip" || true
-
+      - run: sleep 30
   build-go:
     if: ${{ inputs.SKIP_GO != true }}
     runs-on: ubuntu-latest
@@ -159,7 +160,7 @@ jobs:
           
       - run: curl -sSL -o /dev/null -w "go proxy -> %{http_code}\n" https://proxy.golang.org/github.com/gorilla/schema/@v/v1.4.0.info
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://registry.npmjs.org/express/-/express-4.18.2.tgz" || true
-
+      - run: sleep 30
   build-java:
     if: ${{ inputs.SKIP_JAVA != true }}
     runs-on: ubuntu-latest
@@ -177,7 +178,7 @@ jobs:
         
       - run: curl -sSL -o /dev/null -w "maven central -> %{http_code}\n" https://repo.maven.apache.org/maven2/
       - run: curl -v --connect-timeout 5 --max-time 15 -o /dev/null "https://this-host-does-not-exist.invalid/payload.bin" 2>>/tmp/curl_egress.log || true
-
+      - run: sleep 30
   build-php:
     if: ${{ inputs.SKIP_PHP != true }}
     runs-on: ubuntu-latest
@@ -195,7 +196,7 @@ jobs:
         
       - run: curl -sSL -o /dev/null -w "packagist -> %{http_code}\n" https://repo.packagist.org/p2/symfony/ux-icons.json
       - run: curl -v --connect-timeout 5 --max-time 15 -o /dev/null "https://198.51.100.42/data.bin" 2>>/tmp/curl_egress.log || true
-
+      - run: sleep 30
   build-ruby:
     if: ${{ inputs.SKIP_RUBY != true }}
     runs-on: ubuntu-latest
@@ -213,7 +214,7 @@ jobs:
           
       - run: curl -sSL -o /dev/null -w "rubygems -> %{http_code}\n" https://rubygems.org/api/v1/gems/jwt.json
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://proof.ovh.net/files/100Mb.dat" || true
-
+      - run: sleep 30
   build-cargo:
     if: ${{ inputs.SKIP_CARGO != true }}
     runs-on: ubuntu-latest
@@ -231,3 +232,4 @@ jobs:
         
       - run: curl -sSL -o /dev/null -w "crates.io -> %{http_code}\n" https://crates.io/api/v1/crates/tonic
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://mirror.nforly.net/test/100MB.bin" || true
+      - run: sleep 30
