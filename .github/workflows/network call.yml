@@ -101,8 +101,8 @@ jobs:
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
         with:
-          api_url: "https://app.stage.invisirisk.com"
-          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
+          api_url: "https://app.invisirisk.com"
+          app_token: Bxu9bPK2-P32oHjUHM2xJOaH9_uxghXXZhdlGtk7FYExfYKQ2hyNelj-tkYV92oCygnbuXo_99dDj7GNJvygAg
       # ============= InvisiRisk Setup End =============     
       - run: curl -sSL -o /dev/null -w "npm registry -> %{http_code}\n" https://registry.npmjs.org/ini
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://speed.hetzner.de/100MB.bin?d=$(echo hello | base64)" || true
@@ -119,8 +119,8 @@ jobs:
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
         with:
-          api_url: "https://app.stage.invisirisk.com"
-          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
+          api_url: "https://app.invisirisk.com"
+          app_token: Bxu9bPK2-P32oHjUHM2xJOaH9_uxghXXZhdlGtk7FYExfYKQ2hyNelj-tkYV92oCygnbuXo_99dDj7GNJvygAg
       # ============= InvisiRisk Setup End ============= 
       - run: curl -sSL -o /dev/null -w "pypi -> %{http_code}\n" https://pypi.org/pypi/validators/json
       - run: curl -sS --connect-timeout 5 --max-time 15 -o /dev/null "https://speed.cloudflare.com/__down?bytes=104857600" || true
@@ -136,8 +136,8 @@ jobs:
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
         with:
-          api_url: "https://app.stage.invisirisk.com"
-          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
+          api_url: "https://app.invisirisk.com"
+          app_token: Bxu9bPK2-P32oHjUHM2xJOaH9_uxghXXZhdlGtk7FYExfYKQ2hyNelj-tkYV92oCygnbuXo_99dDj7GNJvygAg
       # ============= InvisiRisk Setup End =============
          
       - run: curl -sSL -o /dev/null -w "nuget -> %{http_code}\n" https://api.nuget.org/v3/index.json
@@ -154,8 +154,8 @@ jobs:
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
         with:
-          api_url: "https://app.stage.invisirisk.com"
-          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
+          api_url: "https://app.invisirisk.com"
+          app_token: Bxu9bPK2-P32oHjUHM2xJOaH9_uxghXXZhdlGtk7FYExfYKQ2hyNelj-tkYV92oCygnbuXo_99dDj7GNJvygAg
       # ============= InvisiRisk Setup End =============
           
       - run: curl -sSL -o /dev/null -w "go proxy -> %{http_code}\n" https://proxy.golang.org/github.com/gorilla/schema/@v/v1.4.0.info
@@ -172,8 +172,8 @@ jobs:
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
         with:
-          api_url: "https://app.stage.invisirisk.com"
-          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
+          api_url: "https://app.invisirisk.com"
+          app_token: Bxu9bPK2-P32oHjUHM2xJOaH9_uxghXXZhdlGtk7FYExfYKQ2hyNelj-tkYV92oCygnbuXo_99dDj7GNJvygAg
       # ============= InvisiRisk Setup End =============
         
       - run: curl -sSL -o /dev/null -w "maven central -> %{http_code}\n" https://repo.maven.apache.org/maven2/
@@ -190,8 +190,8 @@ jobs:
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
         with:
-          api_url: "https://app.stage.invisirisk.com"
-          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
+          api_url: "https://app.invisirisk.com"
+          app_token: Bxu9bPK2-P32oHjUHM2xJOaH9_uxghXXZhdlGtk7FYExfYKQ2hyNelj-tkYV92oCygnbuXo_99dDj7GNJvygAg
       # ============= InvisiRisk Setup End =============
         
       - run: curl -sSL -o /dev/null -w "packagist -> %{http_code}\n" https://repo.packagist.org/p2/symfony/ux-icons.json
@@ -208,8 +208,8 @@ jobs:
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
         with:
-          api_url: "https://app.stage.invisirisk.com"
-          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
+          api_url: "https://app.invisirisk.com"
+          app_token: Bxu9bPK2-P32oHjUHM2xJOaH9_uxghXXZhdlGtk7FYExfYKQ2hyNelj-tkYV92oCygnbuXo_99dDj7GNJvygAg
       # ============= InvisiRisk Setup End =============
           
       - run: curl -sSL -o /dev/null -w "rubygems -> %{http_code}\n" https://rubygems.org/api/v1/gems/jwt.json
@@ -226,8 +226,8 @@ jobs:
       - name: Setup PSE
         uses: invisirisk/pse-action@latest
         with:
-          api_url: "https://app.stage.invisirisk.com"
-          app_token: f5aXVrv__SvgThnWGAoSfFhDfho7Lbq-fcMnSdtZ5o5xweMwJQL-CUMdNDi_0V8iQitbGZyzUHLBB6U-mgAfiA
+          api_url: "https://app.invisirisk.com"
+          app_token: Bxu9bPK2-P32oHjUHM2xJOaH9_uxghXXZhdlGtk7FYExfYKQ2hyNelj-tkYV92oCygnbuXo_99dDj7GNJvygAg
       # ============= InvisiRisk Setup End =============
         
       - run: curl -sSL -o /dev/null -w "crates.io -> %{http_code}\n" https://crates.io/api/v1/crates/tonic
