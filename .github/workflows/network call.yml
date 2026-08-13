@@ -96,6 +96,10 @@ jobs:
     container:
       image: node:20
     steps:
+      # ============= InvisiRisk Setup =============
+      - name: Setup PSE
+        uses: invisirisk/pse-action@latest
+      # ============= InvisiRisk Setup End =============
       - run: apt-get update && apt-get install -y curl
 
 
@@ -114,6 +118,10 @@ jobs:
     container:
       image: python:${{ inputs.PYTHON_VERSION || '3.11' }}
     steps:
+      # ============= InvisiRisk Setup =============
+      - name: Setup PSE
+        uses: invisirisk/pse-action@latest
+      # ============= InvisiRisk Setup End =============
       - run: apt-get update && apt-get install -y curl
 
 
@@ -131,6 +139,10 @@ jobs:
     container:
       image: mcr.microsoft.com/dotnet/sdk:${{ inputs.DOTNET_VERSION || '8.0' }}
     steps:
+      # ============= InvisiRisk Setup =============
+      - name: Setup PSE
+        uses: invisirisk/pse-action@latest
+      # ============= InvisiRisk Setup End =============
       - run: apt-get update && apt-get install -y curl
 
 
@@ -149,6 +161,10 @@ jobs:
     container:
       image: golang:${{ inputs.GO_VERSION || '1.22' }}
     steps:
+      # ============= InvisiRisk Setup =============
+      - name: Setup PSE
+        uses: invisirisk/pse-action@latest
+      # ============= InvisiRisk Setup End =============
       - run: apt-get update && apt-get install -y curl
 
 
@@ -167,6 +183,10 @@ jobs:
     container:
       image: maven:3.9-eclipse-temurin-${{ inputs.JAVA_VERSION || '17' }}
     steps:
+      # ============= InvisiRisk Setup =============
+      - name: Setup PSE
+        uses: invisirisk/pse-action@latest
+      # ============= InvisiRisk Setup End =============
       - run: apt-get update && apt-get install -y curl
 
 
@@ -185,6 +205,10 @@ jobs:
     container:
       image: php:${{ inputs.PHP_VERSION || '8.2' }}-cli
     steps:
+      # ============= InvisiRisk Setup =============
+      - name: Setup PSE
+        uses: invisirisk/pse-action@latest
+      # ============= InvisiRisk Setup End =============
       - run: apt-get update && apt-get install -y curl
 
 
@@ -203,6 +227,10 @@ jobs:
     container:
       image: ruby:${{ inputs.RUBY_VERSION || '3.3' }}
     steps:
+      # ============= InvisiRisk Setup =============
+      - name: Setup PSE
+        uses: invisirisk/pse-action@latest
+      # ============= InvisiRisk Setup End =============
       - run: apt-get update && apt-get install -y curl
 
 
@@ -221,6 +249,10 @@ jobs:
     container:
       image: rust:${{ inputs.RUST_VERSION || '1.79' }}
     steps:
+      # ============= InvisiRisk Setup =============
+      - name: Setup PSE
+        uses: invisirisk/pse-action@latest
+      # ============= InvisiRisk Setup End =============
       - run: apt-get update && apt-get install -y curl
 
 
